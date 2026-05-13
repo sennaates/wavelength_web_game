@@ -29,7 +29,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Segoe UI', system-ui, sans-serif;
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -489,17 +489,145 @@
   .overlay-bg.show { display: flex; }
 
   /* RESPONSIVE */
+
+  /* --- Portrait phone --- */
   @media (max-width: 600px) {
+    body { justify-content: flex-start; padding-top: 12px; }
+    .screen { padding: 12px; }
     .setup-grid { grid-template-columns: 1fr; }
     .score-bar { grid-template-columns: 1fr auto 1fr; gap: 6px; }
+    .score-card { padding: 8px 10px; }
     .score-card .score-num { font-size: 1.5rem; }
-    .scale-card { padding: 14px 16px; gap: 8px; }
-    .handoff-card { padding: 28px 24px; }
-    .result-winner-card { padding: 24px 28px; }
+    .scale-card { padding: 12px 14px; gap: 8px; }
+    .scale-pole { font-size: clamp(0.9rem, 4vw, 1.2rem); }
+    .handoff-card { padding: 24px 18px; }
+    .handoff-icon { font-size: 2rem; margin-bottom: 10px; }
+    .handoff-team { font-size: 1.7rem; }
+    .result-winner-card { padding: 24px 20px; }
+    .phase-strip { font-size: 0.68rem; gap: 5px; padding: 5px 10px; }
+    .btn { padding: 12px 22px; font-size: 0.9rem; }
   }
 
+  /* --- Small portrait phone --- */
+  @media (max-width: 380px) {
+    .phase-strip { display: none; }
+    .score-card .score-num { font-size: 1.3rem; }
+    #screen-game { gap: 8px; padding: 8px; }
+  }
+
+  /* --- Desktop padding --- */
   @media (min-width: 860px) {
     body { padding: 20px; }
+  }
+
+  /* --- Landscape phone (short viewport) --- */
+  @media (orientation: landscape) and (max-height: 520px) {
+    body {
+      min-height: 100dvh;
+      justify-content: flex-start;
+      overflow-y: auto;
+      padding: 0;
+    }
+
+    .screen { padding: 6px 10px; }
+
+    /* Game screen: horizontal layout */
+    #screen-game {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 6px 10px;
+      max-width: 100%;
+    }
+
+    /* Score bar spans full width at top */
+    .score-bar {
+      width: 100%;
+      max-width: 100%;
+      gap: 6px;
+      order: 0;
+    }
+    .score-card { padding: 6px 10px; }
+    .score-card .score-num { font-size: 1.2rem; }
+    .score-card .score-target { font-size: 0.6rem; }
+    .round-num, .turn-label { font-size: 0.65rem; }
+
+    /* Phase strip: compact, full-width below score bar */
+    .phase-strip {
+      order: 1;
+      width: 100%;
+      max-width: 100%;
+      font-size: 0.65rem;
+      padding: 4px 10px;
+      gap: 4px;
+    }
+
+    /* Scale card: left column */
+    .scale-card {
+      order: 2;
+      flex: 0 0 auto;
+      width: calc(100% - 8px);
+      max-width: 320px;
+      padding: 10px 14px;
+      gap: 8px;
+      align-self: flex-start;
+    }
+    .scale-pole { font-size: clamp(0.85rem, 2.5vw, 1rem); }
+
+    /* Wheel container: right column, tightly sized */
+    .wheel-container {
+      order: 3;
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: calc(100vh - 20px);
+      align-self: flex-start;
+    }
+    #wheel-svg {
+      max-width: min(45vh, 340px);
+      width: 100%;
+    }
+
+    /* Action row below wheel */
+    .action-row {
+      order: 4;
+      width: 100%;
+      gap: 8px;
+    }
+    .btn { padding: 10px 18px; font-size: 0.82rem; }
+
+    /* Handoff and result screens: scrollable cards */
+    #screen-handoff, #screen-result {
+      gap: 10px;
+      justify-content: flex-start;
+      overflow-y: auto;
+      padding: 8px 16px;
+      min-height: 100dvh;
+    }
+    .handoff-card {
+      padding: 16px 20px;
+      max-width: 480px;
+    }
+    .handoff-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .handoff-team { font-size: 1.6rem; }
+    .handoff-sub { font-size: 0.82rem; }
+    .handoff-scale-row { margin: 10px 0 2px; }
+    .result-winner-card { padding: 16px 24px; }
+    .result-scores-grid { gap: 10px; }
+    .result-score-card { padding: 12px; }
+    .result-score-card .r-pts { font-size: 1.8rem; }
+
+    /* Score popup: smaller in landscape */
+    .score-popup { padding: 20px 32px; min-width: 200px; }
+    .score-popup .pts-num { font-size: 3.5rem; }
+  }
+
+  /* --- Landscape phone, very narrow (< 380px height) --- */
+  @media (orientation: landscape) and (max-height: 360px) {
+    .phase-strip { display: none; }
+    #wheel-svg { max-width: min(38vh, 280px); }
+    .score-card .score-num { font-size: 1rem; }
+    .btn { padding: 8px 14px; font-size: 0.78rem; }
   }
 </style>
 </head>
