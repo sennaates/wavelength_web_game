@@ -1,5 +1,7 @@
 # Dalga Boyu (Wavelength Web Oyunu)
 
+🎮 **[Hemen Oynamak İçin Tıklayın (Canlı Demo)](https://sennaates.github.io/wavelength_web_game/)**
+
 Dalga Boyu, popüler masa oyunu Wavelength'ten ilham alınarak geliştirilmiş, web tarayıcısı üzerinden oynanabilen interaktif bir takım oyunudur. Özellikle mobil cihazlarda (tablet ve telefon) yatay (landscape) kullanım için optimize edilmiş modern, duyarlı (responsive) bir arayüze sahiptir.
 
 ## 🎯 Nasıl Oynanır?
