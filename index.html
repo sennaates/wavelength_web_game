@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Dalga Boyu</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0e1a;
+    --bg2: #1a1a2e;
+    --bg3: #16213e;
+    --accent: #7b2fff;
+    --accent2: #a855f7;
+    --accent3: #c084fc;
+    --blue: #3b82f6;
+    --blue2: #60a5fa;
+    --gold: #fbbf24;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --card: #1e1b3a;
+    --border: #2d2b52;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  .screen { display: none; width: 100%; max-width: 860px; padding: 20px; animation: fadeIn 0.3s ease; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+  @keyframes scoreUp { 0% { transform: scale(1); } 30% { transform: scale(1.3); color: #fbbf24; } 100% { transform: scale(1); } }
+  @keyframes confettiFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+  @keyframes slideIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 10px var(--accent); } 50% { box-shadow: 0 0 30px var(--accent), 0 0 60px var(--accent2); } }
+  @keyframes needlePulse { 0%,100% { filter: drop-shadow(0 0 4px white); } 50% { filter: drop-shadow(0 0 12px #fbbf24); } }
+  @keyframes wheelBlurSpin {
+    0%   { filter: blur(4px) brightness(1.6); opacity: 0.7; }
+    40%  { filter: blur(2px) brightness(1.3); opacity: 0.85; }
+    80%  { filter: blur(0.5px) brightness(1.05); opacity: 0.95; }
+    100% { filter: none; opacity: 1; }
+  }
+  #wheel-svg.spinning { animation: wheelBlurSpin 1.65s ease-out forwards; }
+  .btn-spin-wait { opacity: 0.45; cursor: not-allowed !important; }
+
+  /* MENU SCREEN */
+  .menu-logo {
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent2), var(--blue2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .menu-subtitle {
+    color: var(--text2);
+    font-size: 1rem;
+    margin-bottom: 40px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .menu-wave {
+    width: 200px;
+    height: 60px;
+    margin-bottom: 40px;
+    opacity: 0.6;
+  }
+  .rules-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 32px;
+    max-width: 520px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+  .rules-card h3 { color: var(--accent3); margin-bottom: 14px; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; }
+  .rules-card ul { list-style: none; }
+  .rules-card li { color: var(--text2); font-size: 0.92rem; padding: 5px 0; display: flex; align-items: flex-start; gap: 10px; }
+  .rules-card li::before { content: '◆'; color: var(--accent); font-size: 0.6rem; margin-top: 4px; flex-shrink: 0; }
+
+  /* BUTTONS */
+  .btn {
+    padding: 14px 40px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    color: white;
+    box-shadow: 0 4px 20px rgba(123,47,255,0.4);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 28px rgba(123,47,255,0.6); transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent2); color: var(--accent3); }
+  .btn-gold {
+    background: linear-gradient(135deg, #d97706, var(--gold));
+    color: #1a1100;
+    box-shadow: 0 4px 20px rgba(251,191,36,0.3);
+  }
+  .btn-gold:hover { box-shadow: 0 6px 28px rgba(251,191,36,0.5); transform: translateY(-1px); }
+  .btn-sm { padding: 8px 22px; font-size: 0.85rem; }
+
+  /* SETUP SCREEN */
+  .setup-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+  .setup-section {
+    width: 100%;
+    max-width: 580px;
+    margin-bottom: 20px;
+  }
+  .setup-section-label {
+    font-size: 0.7rem;
+    color: var(--text2);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .setup-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .team-input-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+  .team-input-card:focus-within { border-color: var(--accent2); }
+  .team-input-card label { display: block; font-size: 0.7rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .team-input-card input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border);
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding: 5px 0;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .team-input-card input:focus { border-bottom-color: var(--accent2); }
+
+  /* TARGET NUMBER INPUT */
+  .target-number-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 18px;
+    transition: border-color 0.2s;
+  }
+  .target-number-wrap:focus-within { border-color: var(--accent2); }
+  .target-number-wrap label { color: var(--text2); font-size: 0.85rem; flex: 1; }
+  .target-number-input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.4rem;
+    font-weight: 900;
+    width: 64px;
+    text-align: center;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .target-number-input::-webkit-inner-spin-button,
+  .target-number-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .target-spin-btns { display: flex; flex-direction: column; gap: 2px; }
+  .target-spin-btn {
+    background: var(--border);
+    border: none;
+    border-radius: 4px;
+    color: var(--text2);
+    font-size: 0.65rem;
+    width: 22px;
+    height: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .target-spin-btn:hover { background: var(--accent); color: white; }
+
+  /* HANDOFF SCALE INPUT */
+  .handoff-scale-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    margin: 16px 0 4px;
+  }
+  .handoff-pole-input {
+    flex: 1;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+    text-align: center;
+  }
+  .handoff-pole-input::placeholder { color: var(--text2); font-weight: 400; font-size: 0.85rem; }
+  .handoff-pole-input.h-left:focus { border-color: #fb7185; }
+  .handoff-pole-input.h-right:focus { border-color: #34d399; }
+  .handoff-pole-sep { color: var(--text2); font-size: 1rem; flex-shrink: 0; font-weight: 600; }
+
+  /* GAME SCREEN */
+  #screen-game { padding: 12px 16px; gap: 10px; }
+
+  .score-bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    width: 100%;
+    max-width: 760px;
+    gap: 10px;
+    align-items: center;
+  }
+  .score-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+  .score-card.active-team { border-color: var(--accent2); animation: glow 2s ease-in-out infinite; }
+  .score-card .team-name { font-size: 0.75rem; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score-card .score-num { font-size: 2rem; font-weight: 900; color: var(--text); line-height: 1; }
+  .score-card .score-num.bumped { animation: scoreUp 0.6s ease; }
+  .score-card .score-target { font-size: 0.7rem; color: var(--text2); }
+
+  .round-info { text-align: center; }
+  .round-num { font-size: 0.75rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; }
+  .turn-label { font-size: 0.7rem; color: var(--accent3); margin-top: 2px; }
+
+  /* SCALE CARD */
+  .scale-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px 28px;
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .scale-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(123,47,255,0.05), transparent, rgba(59,130,246,0.05));
+    pointer-events: none;
+  }
+  .scale-pole {
+    font-size: clamp(1rem, 3.5vw, 1.4rem);
+    font-weight: 800;
+    flex: 1;
+    text-align: center;
+  }
+  .scale-pole.left { color: #fb7185; }
+  .scale-pole.right { color: #34d399; }
+  .scale-divider { color: var(--border); font-size: 1.5rem; flex-shrink: 0; }
+  .scale-arrow { font-size: 1rem; color: var(--text2); flex-shrink: 0; }
+
+  /* PHASE INDICATOR */
+  .phase-strip {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--text2);
+    padding: 6px 14px;
+    background: var(--bg2);
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    max-width: 700px;
+    width: 100%;
+    justify-content: center;
+  }
+  .phase-step { opacity: 0.4; transition: all 0.3s; display: flex; align-items: center; gap: 5px; }
+  .phase-step.done { opacity: 0.5; text-decoration: line-through; }
+  .phase-step.active { opacity: 1; color: var(--accent3); font-weight: 700; }
+  .phase-sep { opacity: 0.3; }
+
+  /* WHEEL CONTAINER */
+  .wheel-container {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #wheel-svg {
+    width: 100%;
+    max-width: 680px;
+    height: auto;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .needle-group { cursor: grab; }
+  .needle-group:active { cursor: grabbing; }
+
+  /* HIDE BUTTON */
+  .hide-btn-wrap { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 10; }
+  #hide-btn {
+    padding: 12px 32px;
+    border-radius: 50px;
+    border: none;
+    background: linear-gradient(135deg, #1e1b3a, #2d2b52);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+    letter-spacing: 0.5px;
+  }
+  #hide-btn:hover { background: linear-gradient(135deg, #2d2b52, #3d3a6e); }
+  #hide-btn:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+  /* SUBMIT ROW */
+  .action-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  /* SCORE POPUP */
+  .score-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: var(--card);
+    border: 2px solid var(--accent2);
+    border-radius: 24px;
+    padding: 32px 48px;
+    text-align: center;
+    z-index: 1000;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(123,47,255,0.3);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    min-width: 280px;
+  }
+  .score-popup.show { transform: translate(-50%, -50%) scale(1); pointer-events: all; animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .score-popup .pts-label { font-size: 0.75rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; }
+  .score-popup .pts-num { font-size: 5rem; font-weight: 900; line-height: 1; background: linear-gradient(135deg, var(--gold), #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .score-popup .pts-zone { font-size: 1.1rem; color: var(--text); margin-top: 4px; margin-bottom: 20px; }
+
+  /* HANDOFF SCREEN */
+  #screen-handoff {
+    gap: 20px;
+  }
+  .handoff-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 24px;
+    padding: 40px 48px;
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+  }
+  .handoff-icon { font-size: 3rem; margin-bottom: 16px; }
+  .handoff-title { font-size: 1rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .handoff-team { font-size: 2.2rem; font-weight: 900; color: var(--accent3); margin-bottom: 8px; }
+  .handoff-sub { color: var(--text2); font-size: 0.9rem; }
+
+  /* RESULT SCREEN */
+  #screen-result { gap: 20px; }
+  .result-winner-card {
+    background: linear-gradient(135deg, rgba(123,47,255,0.2), rgba(59,130,246,0.2));
+    border: 2px solid var(--accent2);
+    border-radius: 24px;
+    padding: 32px 48px;
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    animation: glow 2s ease-in-out infinite;
+  }
+  .result-label { font-size: 0.75rem; color: var(--text2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+  .result-winner-name { font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 900; background: linear-gradient(135deg, var(--gold), #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 4px; }
+  .result-final-score { font-size: 1.2rem; color: var(--text2); }
+  .result-scores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; max-width: 420px; margin-top: 8px; }
+  .result-score-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; }
+  .result-score-card .r-name { font-size: 0.75rem; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .result-score-card .r-pts { font-size: 2.5rem; font-weight: 900; }
+
+  /* HISTORY LOG */
+  .history-log {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .history-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 14px;
+    font-size: 0.72rem;
+    color: var(--text2);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .history-item .h-team { font-weight: 700; }
+  .history-item .h-pts { color: var(--gold); font-weight: 700; }
+
+  /* CONFETTI CANVAS */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* TRANSITION OVERLAY */
+  .overlay-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay-bg.show { display: flex; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .setup-grid { grid-template-columns: 1fr; }
+    .score-bar { grid-template-columns: 1fr auto 1fr; gap: 6px; }
+    .score-card .score-num { font-size: 1.5rem; }
+    .scale-card { padding: 14px 16px; gap: 8px; }
+    .handoff-card { padding: 28px 24px; }
+    .result-winner-card { padding: 24px 28px; }
+  }
+
+  @media (min-width: 860px) {
+    body { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ═══════════════════════════════ MENU ═══════════════════════════════ -->
+<div id="screen-menu" class="screen active">
+  <div class="menu-logo">Dalga Boyu</div>
+  <div class="menu-subtitle">Wavelength · Tablet Oyunu</div>
+
+  <svg class="menu-wave" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 30 Q30 5 50 30 Q70 55 90 30 Q110 5 130 30 Q150 55 170 30 Q190 5 190 30" stroke="url(#wg)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <defs><linearGradient id="wg" x1="10" y1="30" x2="190" y2="30" gradientUnits="userSpaceOnUse"><stop stop-color="#7b2fff"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>
+  </svg>
+
+  <div class="rules-card">
+    <h3>Nasıl Oynanır?</h3>
+    <ul>
+      <li>Her turda bir ölçek belirir (örn. <strong>Sıcak ↔ Soğuk</strong>)</li>
+      <li>İpucu veren "Gizle" der, çark döner ve hedef gizlenir</li>
+      <li>İpucu veren, ölçeğe bakarak <strong>tek kelimelik</strong> ipucu verir</li>
+      <li>Tahmin eden, iğneyi kaydırarak tahminini yapar</li>
+      <li>Çark açılır — iğnenin bölgesine göre <strong>4–3–2–0</strong> puan verilir</li>
+      <li>Hedefe ilk ulaşan takım kazanır!</li>
+    </ul>
+  </div>
+
+  <button class="btn btn-primary" onclick="showScreen('setup')" style="font-size:1.1rem; padding:16px 60px;">
+    🎯 Oyuna Başla
+  </button>
+</div>
+
+<!-- ═══════════════════════════════ SETUP ═══════════════════════════════ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-title">Oyunu Kur</div>
+  <p style="color:var(--text2);font-size:0.85rem;margin-bottom:22px;">Takım isimlerini ve hedef puanı belirle</p>
+
+  <div class="setup-section">
+    <div class="setup-section-label">Takımlar</div>
+    <div class="setup-grid">
+      <div class="team-input-card">
+        <label>Takım 1</label>
+        <input type="text" id="team1-name" value="Takım 1" maxlength="16" placeholder="Takım 1">
+      </div>
+      <div class="team-input-card">
+        <label>Takım 2</label>
+        <input type="text" id="team2-name" value="Takım 2" maxlength="16" placeholder="Takım 2">
+      </div>
+    </div>
+  </div>
+
+  <div class="setup-section">
+    <div class="setup-section-label">Hedef Puan</div>
+    <div class="target-number-wrap">
+      <label>Kazanmak için gereken puan</label>
+      <div class="target-spin-btns">
+        <button class="target-spin-btn" onclick="changeTarget(1)">▲</button>
+        <button class="target-spin-btn" onclick="changeTarget(-1)">▼</button>
+      </div>
+      <input class="target-number-input" id="target-score-input" type="number" min="5" max="99" value="15">
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+    <button class="btn btn-secondary" onclick="showScreen('menu')">← Geri</button>
+    <button class="btn btn-primary" onclick="startGame()" style="padding:14px 52px;">Başlat →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ HANDOFF ═══════════════════════════════ -->
+<div id="screen-handoff" class="screen">
+  <div class="handoff-card">
+    <div class="handoff-icon" id="handoff-icon">📱</div>
+    <div class="handoff-title" id="handoff-title">Sıradaki Tur</div>
+    <div class="handoff-team" id="handoff-team-name">Takım 2</div>
+    <div class="handoff-sub" id="handoff-sub">Tableti bu takıma verin!</div>
+
+    <div style="margin-top:20px;width:100%;">
+      <div style="font-size:0.7rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;text-align:left;">Bu Turun Ölçeği</div>
+      <div class="handoff-scale-row">
+        <input class="handoff-pole-input h-left" id="handoff-left" type="text" maxlength="28" placeholder="Sol uç (örn. Sıcak)">
+        <span class="handoff-pole-sep">↔</span>
+        <input class="handoff-pole-input h-right" id="handoff-right" type="text" maxlength="28" placeholder="Sağ uç (örn. Soğuk)">
+      </div>
+      <div id="handoff-scale-hint" style="font-size:0.72rem;color:#f97316;margin-top:6px;text-align:center;min-height:1em;"></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="confirmHandoff()">Hazırız ✓</button>
+</div>
+
+<!-- ═══════════════════════════════ GAME ═══════════════════════════════ -->
+<div id="screen-game" class="screen">
+
+  <!-- SCORE BAR -->
+  <div class="score-bar" style="width:100%;max-width:760px;">
+    <div class="score-card" id="score-card-0">
+      <div class="team-name" id="score-name-0">Takım 1</div>
+      <div class="score-num" id="score-num-0">0</div>
+      <div class="score-target" id="score-target-0">/ 15</div>
+    </div>
+    <div class="round-info">
+      <div class="round-num" id="round-label">TUR 1</div>
+      <div class="turn-label" id="turn-team-label">Takım 1</div>
+    </div>
+    <div class="score-card" id="score-card-1">
+      <div class="team-name" id="score-name-1">Takım 2</div>
+      <div class="score-num" id="score-num-1">0</div>
+      <div class="score-target" id="score-target-1">/ 15</div>
+    </div>
+  </div>
+
+  <!-- PHASE STRIP -->
+  <div class="phase-strip">
+    <div class="phase-step" id="ph-1">Çevir</div>
+    <div class="phase-sep">›</div>
+    <div class="phase-step" id="ph-2">Bak</div>
+    <div class="phase-sep">›</div>
+    <div class="phase-step" id="ph-3">İpucu Ver</div>
+    <div class="phase-sep">›</div>
+    <div class="phase-step" id="ph-4">Tahmin Et</div>
+    <div class="phase-sep">›</div>
+    <div class="phase-step" id="ph-5">Aç</div>
+  </div>
+
+  <!-- SCALE CARD -->
+  <div class="scale-card">
+    <span class="scale-pole left" id="pole-left">Sıcak</span>
+    <div style="width:2px;height:40px;background:var(--border);flex-shrink:0;border-radius:2px;"></div>
+    <span class="scale-pole right" id="pole-right">Soğuk</span>
+  </div>
+
+  <!-- WHEEL -->
+  <div class="wheel-container" id="wheel-wrap">
+    <svg id="wheel-svg" viewBox="-10 -340 700 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="boxGrad" cx="50%" cy="100%" r="70%">
+          <stop offset="0%" stop-color="#1e1b3a"/>
+          <stop offset="100%" stop-color="#0f0e1a"/>
+        </radialGradient>
+        <filter id="glow-filter">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="needle-glow">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- WHEEL SLICES (drawn from center outward) -->
+      <!-- Outer dead zone: 0–15° each side (30° total on each side = outermost) -->
+      <!-- Zone layout from center: 4pt, 3pt, 2pt, 0pt -->
+      <!-- BASE: dark background semicircle (always visible) -->
+      <path d="M 0 0 A 330 330 0 0 1 680 0 Z" fill="#13121f"/>
+
+      <!-- ZONE LAYER — only shown to clue-giver (hide phase) and on reveal -->
+      <g id="zone-layer" opacity="0" style="transition:opacity 0.5s">
+        <path id="zone-outer-l" d="" fill="#1b2640"/>
+        <path id="zone-outer-r" d="" fill="#1b2640"/>
+        <path id="zone-2-l" d="" fill="#0e7490"/>
+        <path id="zone-2-r" d="" fill="#0e7490"/>
+        <path id="zone-3-l" d="" fill="#c2410c"/>
+        <path id="zone-3-r" d="" fill="#c2410c"/>
+        <path id="zone-4" d="" fill="#d97706"/>
+        <!-- Zone dividers -->
+        <g id="divider-lines" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"></g>
+        <!-- Score labels -->
+        <g id="score-labels">
+          <text id="lbl-4"  fill="white"   font-size="18" font-weight="900" text-anchor="middle" font-family="system-ui"></text>
+          <text id="lbl-3l" fill="#fed7aa" font-size="15" font-weight="700" text-anchor="middle" font-family="system-ui"></text>
+          <text id="lbl-3r" fill="#fed7aa" font-size="15" font-weight="700" text-anchor="middle" font-family="system-ui"></text>
+          <text id="lbl-2l" fill="#a5f3fc" font-size="14" font-weight="700" text-anchor="middle" font-family="system-ui"></text>
+          <text id="lbl-2r" fill="#a5f3fc" font-size="14" font-weight="700" text-anchor="middle" font-family="system-ui"></text>
+        </g>
+      </g>
+
+      <!-- Outer arc rim (always visible) -->
+      <path d="M 0 0 A 330 330 0 0 1 680 0" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
+
+      <!-- DEGREE TICKS -->
+      <g id="ticks" stroke="rgba(255,255,255,0.12)" stroke-width="1"></g>
+
+      <!-- TARGET INDICATOR — shown only to clue giver & on reveal -->
+      <g id="target-indicator" opacity="0" style="transition:opacity 0.5s">
+        <line id="target-line" x1="340" y1="0" x2="340" y2="-305" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="8,5"/>
+        <!-- Bullseye rings at tip -->
+        <circle id="target-tip-outer" cx="340" cy="-305" r="10" fill="none" stroke="#fbbf24" stroke-width="2" opacity="0.6"/>
+        <circle id="target-tip-inner" cx="340" cy="-305" r="4"  fill="#fbbf24"/>
+        <!-- Pivot dot -->
+        <circle cx="340" cy="0" r="5" fill="#fbbf24"/>
+      </g>
+
+      <!-- PHYSICAL BOX (bottom) -->
+      <rect x="-10" y="-30" width="700" height="46" fill="url(#boxGrad)"/>
+      <rect x="-10" y="-30" width="700" height="3" fill="rgba(255,255,255,0.08)"/>
+      <circle cx="30"  cy="-14" r="6" fill="#1a1830" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <circle cx="650" cy="-14" r="6" fill="#1a1830" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+
+      <!-- NEEDLE GROUP (draggable — shown in guess + reveal) -->
+      <g id="needle-group" transform="rotate(0, 340, 0)" opacity="0" style="transition:opacity 0.3s; cursor:grab;">
+        <!-- Wide glow halo -->
+        <line x1="340" y1="-2" x2="340" y2="-290" stroke="#fbbf24" stroke-width="18" stroke-linecap="round" opacity="0.12"/>
+        <!-- Tapered needle body: wide at base, pointed at top -->
+        <polygon points="340,-300 331,-10 349,-10" fill="white"/>
+        <!-- Gold upper section highlight -->
+        <polygon points="340,-300 337,-200 343,-200" fill="#fbbf24" opacity="0.9"/>
+        <!-- Side edge highlights for depth -->
+        <line x1="331" y1="-10" x2="340" y2="-300" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+        <line x1="349" y1="-10" x2="340" y2="-300" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <!-- Tip cap -->
+        <circle cx="340" cy="-300" r="5" fill="#fbbf24"/>
+        <!-- Base pivot -->
+        <circle cx="340" cy="0" r="22" fill="#13121f" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+        <circle cx="340" cy="0" r="10" fill="white" opacity="0.9"/>
+        <!-- Drag hint arrows -->
+        <text x="320" y="5" fill="rgba(255,255,255,0.4)" font-size="12" font-family="system-ui" text-anchor="middle">◂</text>
+        <text x="360" y="5" fill="rgba(255,255,255,0.4)" font-size="12" font-family="system-ui" text-anchor="middle">▸</text>
+      </g>
+
+      <!-- SCALE LABELS ON WHEEL BOTTOM -->
+      <text id="wheel-left"  x="16"  y="-10" fill="#fb7185" font-size="12" font-weight="800" text-anchor="start" font-family="system-ui" opacity="0.8"></text>
+      <text id="wheel-right" x="664" y="-10" fill="#34d399" font-size="12" font-weight="800" text-anchor="end"   font-family="system-ui" opacity="0.8"></text>
+    </svg>
+
+    <!-- INSTRUCTION OVERLAY -->
+    <div id="instruction-hint" style="position:absolute;top:38%;left:50%;transform:translateX(-50%);background:rgba(10,9,26,0.9);border:1px solid var(--accent);border-radius:12px;padding:10px 22px;font-size:0.82rem;color:var(--accent3);white-space:nowrap;pointer-events:none;transition:opacity 0.3s;opacity:0;">
+      İğneyi sürükle veya çarka tıkla
+    </div>
+  </div>
+
+  <!-- ACTION ROW -->
+  <div class="action-row" id="action-row">
+    <!-- dynamically populated -->
+  </div>
+
+  <!-- HISTORY LOG -->
+  <div class="history-log" id="history-log"></div>
+
+</div>
+
+<!-- ═══════════════════════════════ RESULT ═══════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div style="font-size:1rem;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;">Oyun Bitti!</div>
+  <div class="result-winner-card">
+    <div class="result-label">Kazanan</div>
+    <div class="result-winner-name" id="result-winner">Takım 1</div>
+    <div class="result-final-score" id="result-score-text"></div>
+  </div>
+  <div class="result-scores-grid">
+    <div class="result-score-card">
+      <div class="r-name" id="res-name-0">Takım 1</div>
+      <div class="r-pts" id="res-pts-0" style="color:var(--accent3);">0</div>
+    </div>
+    <div class="result-score-card">
+      <div class="r-name" id="res-name-1">Takım 2</div>
+      <div class="r-pts" id="res-pts-1" style="color:var(--blue2);">0</div>
+    </div>
+  </div>
+  <div id="result-history" class="history-log" style="margin-top:8px;"></div>
+  <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+    <button class="btn btn-secondary" onclick="showScreen('menu')">Ana Menü</button>
+    <button class="btn btn-gold" onclick="restartGame()">Tekrar Oyna</button>
+  </div>
+</div>
+
+<!-- SCORE POPUP -->
+<div class="score-popup" id="score-popup">
+  <div class="pts-label">Kazanılan Puan</div>
+  <div class="pts-num" id="popup-pts">4</div>
+  <div class="pts-zone" id="popup-zone">Tam İsabet!</div>
+  <button class="btn btn-primary btn-sm" onclick="closePopupAndNext()">Devam →</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════
+let state = {
+  teams: ["Takım 1", "Takım 2"],
+  scores: [0, 0],
+  targetScore: 15,
+  currentTeam: 0,
+  round: 1,
+  phase: "hide",
+  targetAngle: 90,
+  guessAngle: 90,
+  currentScale: null,
+  history: [],
+};
+
+const R = 330; // wheel radius
+const CX = 340, CY = 0; // SVG center
+
+// Zone half-widths in degrees
+const Z4 = 8, Z3 = 16, Z2 = 24; // cumulative half-widths
+
+// ═══════════════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+function changeTarget(delta) {
+  const input = document.getElementById('target-score-input');
+  const val = Math.max(5, Math.min(99, (parseInt(input.value) || 15) + delta));
+  input.value = val;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME INIT
+// ═══════════════════════════════════════════════════════════
+function startGame() {
+  state.teams[0] = document.getElementById('team1-name').value.trim() || 'Takım 1';
+  state.teams[1] = document.getElementById('team2-name').value.trim() || 'Takım 2';
+  state.targetScore = Math.max(5, Math.min(99, parseInt(document.getElementById('target-score-input').value) || 15));
+  state.scores = [0, 0];
+  state.round = 1;
+  state.currentTeam = 0;
+  state.history = [];
+
+  for (let i = 0; i < 2; i++) {
+    document.getElementById('score-name-' + i).textContent = state.teams[i];
+    document.getElementById('score-num-' + i).textContent = 0;
+    document.getElementById('score-target-' + i).textContent = '/ ' + state.targetScore;
+  }
+
+  showHandoff(true);
+}
+
+function restartGame() {
+  state.scores = [0, 0];
+  state.round = 1;
+  state.currentTeam = 0;
+  state.history = [];
+
+  for (let i = 0; i < 2; i++) {
+    document.getElementById('score-num-' + i).textContent = 0;
+  }
+
+  showHandoff(true);
+}
+
+function showHandoff(isFirst) {
+  updateScoreActiveIndicator();
+  const teamName = state.teams[state.currentTeam];
+  document.getElementById('handoff-team-name').textContent = teamName;
+
+  if (isFirst) {
+    document.getElementById('handoff-icon').textContent = '🎯';
+    document.getElementById('handoff-title').textContent = 'Oyun Başlıyor';
+    document.getElementById('handoff-sub').textContent = `${teamName} ilk tura hazır mı?`;
+  } else {
+    document.getElementById('handoff-icon').textContent = '📱';
+    document.getElementById('handoff-title').textContent = 'Sıradaki Tur';
+    document.getElementById('handoff-sub').textContent = 'Tableti bu takıma verin!';
+  }
+
+  document.getElementById('handoff-left').value = '';
+  document.getElementById('handoff-right').value = '';
+  document.getElementById('handoff-scale-hint').textContent = '';
+  showScreen('handoff');
+}
+
+function confirmHandoff() {
+  const left = document.getElementById('handoff-left').value.trim();
+  const right = document.getElementById('handoff-right').value.trim();
+  if (!left || !right) {
+    document.getElementById('handoff-scale-hint').textContent = 'İki ucu da doldurun';
+    return;
+  }
+  state.currentScale = [left, right];
+  startRound();
+}
+
+function startRound() {
+  state.targetAngle = 10 + Math.random() * 160;
+  state.guessAngle = 90;
+  state.phase = 'hide';
+
+  updateRoundLabel();
+  updateScaleCard();
+  updateWheelLabels();
+  drawWheel();
+  setNeedleAngle(90);
+  // Start: wheel dark, nothing visible — clue giver will spin first
+  state.phase = 'spin';
+  setZonesVisible(false);
+  setTargetVisible(false);
+  setNeedleVisible(false);
+  hideInstruction(true);
+  updatePhaseUI();
+  updateActionRow();
+  document.getElementById('score-popup').classList.remove('show');
+
+  showScreen('game');
+}
+
+function updateRoundLabel() {
+  document.getElementById('round-label').textContent = 'TUR ' + state.round;
+  document.getElementById('turn-team-label').textContent = state.teams[state.currentTeam];
+}
+
+function updateScaleCard() {
+  document.getElementById('pole-left').textContent = state.currentScale[0];
+  document.getElementById('pole-right').textContent = state.currentScale[1];
+}
+
+function updateWheelLabels() {
+  document.getElementById('wheel-left').textContent = state.currentScale[0];
+  document.getElementById('wheel-right').textContent = state.currentScale[1];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WHEEL DRAWING  (SVG paths computed from targetAngle)
+// ═══════════════════════════════════════════════════════════
+function arcPath(r, startDeg, endDeg) {
+  // SVG coords: 0° = left (west), 180° = right (east), angles go counterclockwise in normal math but SVG y is flipped
+  // We map: 0° -> (0,0) left edge, 180° -> (680,0) right edge
+  // Angle 0=left, 90=center, 180=right on bottom axis
+  const toRad = deg => (deg / 180) * Math.PI;
+  const sx = CX + R * Math.cos(Math.PI - toRad(startDeg));
+  const sy = -R * Math.sin(Math.PI - toRad(startDeg));
+  const ex = CX + R * Math.cos(Math.PI - toRad(endDeg));
+  const ey = -R * Math.sin(Math.PI - toRad(endDeg));
+  const large = (endDeg - startDeg) > 180 ? 1 : 0;
+  // sweep=0 because SVG y is inverted relative to math
+  return `M ${CX} ${CY} L ${sx} ${sy} A ${R} ${R} 0 ${large} 0 ${ex} ${ey} Z`;
+}
+
+function arcPathRing(r1, r2, startDeg, endDeg) {
+  const toRad = deg => (deg / 180) * Math.PI;
+  const s1x = CX + r1 * Math.cos(Math.PI - toRad(startDeg));
+  const s1y = -r1 * Math.sin(Math.PI - toRad(startDeg));
+  const e1x = CX + r1 * Math.cos(Math.PI - toRad(endDeg));
+  const e1y = -r1 * Math.sin(Math.PI - toRad(endDeg));
+  const s2x = CX + r2 * Math.cos(Math.PI - toRad(startDeg));
+  const s2y = -r2 * Math.sin(Math.PI - toRad(startDeg));
+  const e2x = CX + r2 * Math.cos(Math.PI - toRad(endDeg));
+  const e2y = -r2 * Math.sin(Math.PI - toRad(endDeg));
+  const large = (endDeg - startDeg) > 180 ? 1 : 0;
+  return `M ${s2x} ${s2y} A ${r2} ${r2} 0 ${large} 0 ${e2x} ${e2y} L ${e1x} ${e1y} A ${r1} ${r1} 0 ${large} 1 ${s1x} ${s1y} Z`;
+}
+
+function drawWheel() {
+  const t = state.targetAngle;
+  const clamp = (v) => Math.max(0, Math.min(180, v));
+
+  // Zone boundaries
+  const c4l = clamp(t - Z4), c4r = clamp(t + Z4);
+  const c3l = clamp(t - Z3), c3r = clamp(t + Z3);
+  const c2l = clamp(t - Z2), c2r = clamp(t + Z2);
+
+  // Draw zones from outside in
+  document.getElementById('zone-outer-l').setAttribute('d', arcPath(R, 0, c2l));
+  document.getElementById('zone-outer-r').setAttribute('d', arcPath(R, c2r, 180));
+  document.getElementById('zone-2-l').setAttribute('d', arcPath(R, c2l, c3l));
+  document.getElementById('zone-2-r').setAttribute('d', arcPath(R, c3r, c2r));
+  document.getElementById('zone-3-l').setAttribute('d', arcPath(R, c3l, c4l));
+  document.getElementById('zone-3-r').setAttribute('d', arcPath(R, c4r, c3r));
+  document.getElementById('zone-4').setAttribute('d', arcPath(R, c4l, c4r));
+
+  // Divider lines
+  const divG = document.getElementById('divider-lines');
+  divG.innerHTML = '';
+  [0, c2l, c3l, c4l, c4r, c3r, c2r, 180].forEach(angle => {
+    const toRad = deg => (deg / 180) * Math.PI;
+    const ex = CX + R * Math.cos(Math.PI - toRad(angle));
+    const ey = -R * Math.sin(Math.PI - toRad(angle));
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', CX); line.setAttribute('y1', CY);
+    line.setAttribute('x2', ex); line.setAttribute('y2', ey);
+    divG.appendChild(line);
+  });
+
+  // Score label positions
+  const labelAngle = (a1, a2) => (a1 + a2) / 2;
+  const labelPos = (deg, r) => {
+    const toRad = d => (d/180)*Math.PI;
+    return { x: CX + r * Math.cos(Math.PI - toRad(deg)), y: -r * Math.sin(Math.PI - toRad(deg)) };
+  };
+
+  const p4 = labelPos(t, R * 0.65);
+  const p3l = labelPos(labelAngle(c3l, c4l), R * 0.72);
+  const p3r = labelPos(labelAngle(c4r, c3r), R * 0.72);
+  const p2l = labelPos(labelAngle(c2l, c3l), R * 0.78);
+  const p2r = labelPos(labelAngle(c3r, c2r), R * 0.78);
+
+  setLabelPos('lbl-4', p4, '4');
+  setLabelPos('lbl-3l', p3l, '3');
+  setLabelPos('lbl-3r', p3r, '3');
+  setLabelPos('lbl-2l', p2l, '2');
+  setLabelPos('lbl-2r', p2r, '2');
+
+  // Degree ticks
+  const tickG = document.getElementById('ticks');
+  tickG.innerHTML = '';
+  for (let d = 0; d <= 180; d += 10) {
+    const toRad = x => (x/180)*Math.PI;
+    const r1 = d % 30 === 0 ? R - 15 : R - 8;
+    const x1 = CX + r1 * Math.cos(Math.PI - toRad(d));
+    const y1 = -r1 * Math.sin(Math.PI - toRad(d));
+    const x2 = CX + R * Math.cos(Math.PI - toRad(d));
+    const y2 = -R * Math.sin(Math.PI - toRad(d));
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    tickG.appendChild(line);
+  }
+
+  // Position target indicator (line + tip circles)
+  const toRad2 = d => (d/180)*Math.PI;
+  const tipR = R - 25;
+  const tlx = CX + tipR * Math.cos(Math.PI - toRad2(t));
+  const tly = -tipR * Math.sin(Math.PI - toRad2(t));
+  document.getElementById('target-line').setAttribute('x2', tlx);
+  document.getElementById('target-line').setAttribute('y2', tly);
+  document.getElementById('target-tip-outer').setAttribute('cx', tlx);
+  document.getElementById('target-tip-outer').setAttribute('cy', tly);
+  document.getElementById('target-tip-inner').setAttribute('cx', tlx);
+  document.getElementById('target-tip-inner').setAttribute('cy', tly);
+}
+
+function setLabelPos(id, pos, text) {
+  const el = document.getElementById(id);
+  el.setAttribute('x', pos.x);
+  el.setAttribute('y', pos.y + 5);
+  el.textContent = text;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NEEDLE CONTROL
+// ═══════════════════════════════════════════════════════════
+function setNeedleAngle(deg) {
+  // Our coordinate: 0=left, 90=center, 180=right
+  // SVG rotate: positive = clockwise. Center is at bottom.
+  // 90° = pointing up (center). 0° = pointing left. 180° = pointing right.
+  // Rotation from center top: rotate(-(90-deg)) = rotate(deg-90)
+  const svgRot = deg - 90;
+  document.getElementById('needle-group').setAttribute('transform', `rotate(${svgRot}, ${CX}, ${CY})`);
+  state.guessAngle = deg;
+}
+
+function angleFromSVGPoint(clientX, clientY) {
+  const svg = document.getElementById('wheel-svg');
+  const rect = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  const scaleX = vb.width / rect.width;
+  const scaleY = vb.height / rect.height;
+  const svgX = (clientX - rect.left) * scaleX + vb.x;
+  const svgY = (clientY - rect.top) * scaleY + vb.y;
+  // Relative to center (340, 0)
+  const dx = svgX - CX;
+  const dy = svgY - CY; // negative = up
+  // atan2: angle from positive x axis, counterclockwise in math (but y is flipped in SVG)
+  const radians = Math.atan2(-dy, dx); // flip dy because SVG y goes down
+  // radians: 0 = right (+x), π = left (-x)
+  // We want: 0=left, 90=center(up), 180=right
+  // Map: π -> 0, π/2 -> 90 (up), 0 -> 180
+  let deg = 180 - (radians * 180 / Math.PI);
+  return Math.max(2, Math.min(178, deg));
+}
+
+let isDragging = false;
+
+function setupNeedleDrag() {
+  const svg = document.getElementById('wheel-svg');
+  const needle = document.getElementById('needle-group');
+
+  function onMove(clientX, clientY) {
+    if (!isDragging) return;
+    if (state.phase !== 'guess') return;
+    const angle = angleFromSVGPoint(clientX, clientY);
+    setNeedleAngle(angle);
+  }
+
+  // Mouse
+  needle.addEventListener('mousedown', e => {
+    if (state.phase !== 'guess') return;
+    isDragging = true;
+    hideInstruction(true);
+    e.preventDefault();
+  });
+  svg.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+  document.addEventListener('mouseup', () => isDragging = false);
+  svg.addEventListener('click', e => {
+    if (state.phase !== 'guess') return;
+    const angle = angleFromSVGPoint(e.clientX, e.clientY);
+    setNeedleAngle(angle);
+    hideInstruction(true);
+  });
+
+  // Touch
+  needle.addEventListener('touchstart', e => {
+    if (state.phase !== 'guess') return;
+    isDragging = true;
+    hideInstruction(true);
+    e.preventDefault();
+  }, { passive: false });
+  svg.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    onMove(e.touches[0].clientX, e.touches[0].clientY);
+    e.preventDefault();
+  }, { passive: false });
+  svg.addEventListener('touchend', () => isDragging = false);
+  svg.addEventListener('touchstart', e => {
+    if (state.phase !== 'guess') return;
+    const t = e.touches[0];
+    const angle = angleFromSVGPoint(t.clientX, t.clientY);
+    setNeedleAngle(angle);
+    hideInstruction(true);
+    e.preventDefault();
+  }, { passive: false });
+}
+
+function hideInstruction(hide) {
+  document.getElementById('instruction-hint').style.opacity = hide ? '0' : '0.9';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PHASE / COVER / UI
+// ═══════════════════════════════════════════════════════════
+function setZonesVisible(visible) {
+  document.getElementById('zone-layer').style.opacity = visible ? '1' : '0';
+}
+
+function setTargetVisible(visible) {
+  document.getElementById('target-indicator').style.opacity = visible ? '1' : '0';
+}
+
+function setNeedleVisible(visible) {
+  document.getElementById('needle-group').style.opacity = visible ? '1' : '0';
+  document.getElementById('needle-group').style.cursor = visible ? 'grab' : 'default';
+}
+
+// Step 1 — ipucu veren çarkı çevirir (kapalı, hedef rastgele belirlenir)
+function spinWheel() {
+  if (state.phase !== 'spin') return;
+  state.phase = 'spinning';
+  playWheelSpin();
+  document.getElementById('wheel-svg').classList.add('spinning');
+  updatePhaseUI();
+  updateActionRow();
+
+  setTimeout(() => {
+    document.getElementById('wheel-svg').classList.remove('spinning');
+    state.phase = 'peek_ready';
+    updatePhaseUI();
+    updateActionRow();
+  }, 1650);
+}
+
+// Step 2 — sadece ipucu veren çarkı açar, bölgeleri + hedefi görür
+function peekWheel() {
+  if (state.phase !== 'peek_ready') return;
+  state.phase = 'peek';
+  setZonesVisible(true);
+  setTargetVisible(true);
+  updatePhaseUI();
+  updateActionRow();
+}
+
+// Step 3a — çark kapanır, ipucu verilecek
+function closeForClue() {
+  if (state.phase !== 'peek') return;
+  state.phase = 'clue';
+  setZonesVisible(false);
+  setTargetVisible(false);
+  updatePhaseUI();
+  updateActionRow();
+}
+
+// Step 3b — ipucu verildi, tahmin edenin sırası
+function doneClue() {
+  if (state.phase !== 'clue') return;
+  state.phase = 'guess';
+  setNeedleVisible(true);
+  hideInstruction(false);
+  updatePhaseUI();
+  updateActionRow();
+}
+
+function updatePhaseUI() {
+  const ids = ['ph-1','ph-2','ph-3','ph-4','ph-5'];
+  const phaseIndex = {
+    spin: 0, spinning: 0,
+    peek_ready: 1, peek: 1,
+    clue: 2,
+    guess: 3, reveal: 4
+  };
+  const current = phaseIndex[state.phase] ?? 0;
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.className = 'phase-step';
+    if (i < current) el.classList.add('done');
+    else if (i === current) el.classList.add('active');
+  });
+}
+
+function updateActionRow() {
+  const row = document.getElementById('action-row');
+  row.innerHTML = '';
+
+  if (state.phase === 'spin') {
+    const b = makeBtnEl('GİZLE — Çarkı Çevir 🎰', 'btn btn-primary', spinWheel);
+    b.style.padding = '14px 44px';
+    row.appendChild(b);
+
+  } else if (state.phase === 'spinning') {
+    const b = makeBtnEl('Çevriliyor...', 'btn btn-primary btn-spin-wait', () => {});
+    b.disabled = true;
+    b.style.padding = '14px 44px';
+    row.appendChild(b);
+
+  } else if (state.phase === 'peek_ready') {
+    const b = makeBtnEl('Çarkı Aç — Yalnızca Ben Bakıyorum 👁', 'btn btn-secondary', peekWheel);
+    b.style.padding = '14px 36px';
+    b.style.borderColor = 'var(--gold)';
+    b.style.color = 'var(--gold)';
+    row.appendChild(b);
+
+  } else if (state.phase === 'peek') {
+    const b = makeBtnEl('Kapat — İpucumu Vereceğim', 'btn btn-secondary', closeForClue);
+    b.style.padding = '14px 36px';
+    b.style.borderColor = 'var(--accent2)';
+    b.style.color = 'var(--accent3)';
+    row.appendChild(b);
+
+  } else if (state.phase === 'clue') {
+    const b = makeBtnEl('İpucumu Verdim →', 'btn btn-primary', doneClue);
+    b.style.padding = '14px 44px';
+    row.appendChild(b);
+
+  } else if (state.phase === 'guess') {
+    const b = makeBtnEl('Tahminimi Yaptım — Aç! 🎯', 'btn btn-gold', revealResult);
+    b.style.padding = '14px 44px';
+    row.appendChild(b);
+  }
+}
+
+function makeBtnEl(text, cls, fn) {
+  const b = document.createElement('button');
+  b.className = cls;
+  b.textContent = text;
+  b.onclick = fn;
+  return b;
+}
+
+function updateScoreActiveIndicator() {
+  for (let i = 0; i < 2; i++) {
+    const card = document.getElementById('score-card-' + i);
+    card.classList.toggle('active-team', i === state.currentTeam);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SCORING + REVEAL
+// ═══════════════════════════════════════════════════════════
+function revealResult() {
+  state.phase = 'reveal';
+  setZonesVisible(true);
+  setTargetVisible(true);
+  setNeedleVisible(true);
+  hideInstruction(true);
+  updatePhaseUI();
+
+  const diff = Math.abs(state.guessAngle - state.targetAngle);
+  let pts = 0, zone = '';
+  if (diff <= Z4) { pts = 4; zone = '🎯 Tam İsabet!'; }
+  else if (diff <= Z3) { pts = 3; zone = '✨ Çok Yakın!'; }
+  else if (diff <= Z2) { pts = 2; zone = '👍 Yakın!'; }
+  else { pts = 0; zone = '😬 Kaçtı...'; }
+
+  // Add to score
+  state.scores[state.currentTeam] += pts;
+
+  // History
+  state.history.push({
+    team: state.currentTeam,
+    teamName: state.teams[state.currentTeam],
+    scale: state.currentScale[0] + ' / ' + state.currentScale[1],
+    pts,
+    round: state.round,
+  });
+
+  // Update score display
+  const numEl = document.getElementById('score-num-' + state.currentTeam);
+  numEl.textContent = state.scores[state.currentTeam];
+  numEl.classList.remove('bumped');
+  void numEl.offsetWidth;
+  numEl.classList.add('bumped');
+
+  updateActionRow(); // clear buttons
+
+  // Show popup + play score sound after small delay
+  setTimeout(() => { showScorePopup(pts, zone); playScoreSound(pts); }, 400);
+  updateHistoryLog();
+}
+
+function showScorePopup(pts, zone) {
+  document.getElementById('popup-pts').textContent = pts;
+  document.getElementById('popup-zone').textContent = zone;
+  document.getElementById('score-popup').classList.add('show');
+}
+
+function closePopupAndNext() {
+  document.getElementById('score-popup').classList.remove('show');
+
+  if (state.scores[state.currentTeam] >= state.targetScore) {
+    setTimeout(() => { showResult(); launchConfetti(); }, 200);
+    return;
+  }
+
+  state.currentTeam = 1 - state.currentTeam;
+  state.round++;
+  showHandoff(false);
+}
+
+function updateHistoryLog() {
+  const log = document.getElementById('history-log');
+  const last3 = state.history.slice(-3).reverse();
+  log.innerHTML = last3.map(h =>
+    `<div class="history-item"><span class="h-team">${h.teamName}</span><span style="color:var(--text2)">${h.scale}</span><span class="h-pts">+${h.pts}</span></div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RESULT SCREEN
+// ═══════════════════════════════════════════════════════════
+function showResult() {
+  const winner = state.scores[0] >= state.scores[1] ? 0 : 1;
+  document.getElementById('result-winner').textContent = state.teams[winner];
+  document.getElementById('result-score-text').textContent =
+    `${state.scores[0]} – ${state.scores[1]} (Hedef: ${state.targetScore})`;
+  document.getElementById('res-name-0').textContent = state.teams[0];
+  document.getElementById('res-name-1').textContent = state.teams[1];
+  document.getElementById('res-pts-0').textContent = state.scores[0];
+  document.getElementById('res-pts-1').textContent = state.scores[1];
+
+  const rh = document.getElementById('result-history');
+  rh.innerHTML = state.history.slice(-5).reverse().map(h =>
+    `<div class="history-item"><span class="h-team">${h.teamName}</span><span style="color:var(--text2)">T${h.round}: ${h.scale}</span><span class="h-pts">+${h.pts}</span></div>`
+  ).join('');
+
+  showScreen('result');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════════════════════
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = ['#7b2fff','#a855f7','#fbbf24','#3b82f6','#22c55e','#f97316','#ec4899'];
+  const pieces = Array.from({length: 120}, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * 200,
+    w: 6 + Math.random() * 10,
+    h: 4 + Math.random() * 6,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * 360,
+    vx: (Math.random() - 0.5) * 3,
+    vy: 2 + Math.random() * 4,
+    vr: (Math.random() - 0.5) * 8,
+    alpha: 1,
+  }));
+
+  let frame;
+  let t = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    t++;
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      if (t > 120) p.alpha -= 0.012;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    if (pieces.every(p => p.alpha <= 0 || p.y > canvas.height)) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+    frame = requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+//  SCORE SOUNDS
+// ═══════════════════════════════════════════════════════════
+function playNote(ctx, dest, freq, time, dur, type = 'sine', vol = 0.28) {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.connect(g); g.connect(dest);
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.001, time);
+  g.gain.linearRampToValueAtTime(vol, time + 0.018);
+  g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  osc.start(time); osc.stop(time + dur + 0.05);
+}
+
+function playScoreSound(pts) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const master = ctx.createGain();
+    master.gain.value = 0.6;
+    master.connect(ctx.destination);
+    const now = ctx.currentTime;
+
+    if (pts === 4) {
+      // Zafer fanfar: C-E-G-C arpej + son akor
+      [523, 659, 784, 1047].forEach((f, i) =>
+        playNote(ctx, master, f, now + i * 0.11, 0.45, 'sine', 0.32));
+      [523, 659, 784, 1047].forEach(f =>
+        playNote(ctx, master, f, now + 0.55, 0.9, 'sine', 0.22));
+    } else if (pts === 3) {
+      // İki nota mutlu
+      playNote(ctx, master, 523, now, 0.3, 'sine', 0.28);
+      playNote(ctx, master, 784, now + 0.14, 0.5, 'sine', 0.28);
+    } else if (pts === 2) {
+      // Tek yumuşak nota
+      playNote(ctx, master, 440, now, 0.5, 'sine', 0.22);
+      playNote(ctx, master, 554, now + 0.12, 0.4, 'sine', 0.14);
+    } else {
+      // Üzücü alçalan ton (wah-wah)
+      playNote(ctx, master, 320, now,       0.22, 'triangle', 0.25);
+      playNote(ctx, master, 240, now + 0.22, 0.25, 'triangle', 0.22);
+      playNote(ctx, master, 160, now + 0.48, 0.45, 'triangle', 0.18);
+    }
+
+    setTimeout(() => ctx.close(), 2500);
+  } catch (_) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WHEEL SPIN SOUND  (Web Audio API — no external files)
+// ═══════════════════════════════════════════════════════════
+function playWheelSpin() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const master = ctx.createGain();
+    master.gain.value = 0.55;
+    master.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    const spinDuration = 1.6;
+
+    // ── Whoosh: filtered white noise that sweeps down ──
+    const bufSize = Math.floor(ctx.sampleRate * spinDuration);
+    const noiseBuf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) nd[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuf;
+
+    const bpf = ctx.createBiquadFilter();
+    bpf.type = 'bandpass';
+    bpf.frequency.setValueAtTime(1200, now);
+    bpf.frequency.exponentialRampToValueAtTime(180, now + spinDuration);
+    bpf.Q.value = 1.8;
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.18, now);
+    noiseGain.gain.setValueAtTime(0.18, now + 0.05);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + spinDuration - 0.15);
+
+    noise.connect(bpf);
+    bpf.connect(noiseGain);
+    noiseGain.connect(master);
+    noise.start(now);
+    noise.stop(now + spinDuration);
+
+    // ── Ratchet clicks: fast → slow deceleration ──
+    const numTicks = 22;
+    for (let i = 0; i < numTicks; i++) {
+      // Square-root spacing: dense at start, sparse at end
+      const t = now + spinDuration * 0.9 * Math.pow(i / numTicks, 0.45);
+      const progress = i / numTicks;
+
+      // Click body
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g);
+      g.connect(master);
+      osc.type = 'triangle';
+      osc.frequency.value = 520 - progress * 180;   // pitch drops as wheel slows
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.linearRampToValueAtTime(0.35 - progress * 0.1, t + 0.003);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.055);
+      osc.start(t);
+      osc.stop(t + 0.06);
+    }
+
+    // ── Final thud when wheel stops ──
+    const thudT = now + spinDuration * 0.88;
+    const thud = ctx.createOscillator();
+    const thudG = ctx.createGain();
+    thud.connect(thudG);
+    thudG.connect(master);
+    thud.type = 'sine';
+    thud.frequency.setValueAtTime(110, thudT);
+    thud.frequency.exponentialRampToValueAtTime(55, thudT + 0.12);
+    thudG.gain.setValueAtTime(0.001, thudT);
+    thudG.gain.linearRampToValueAtTime(0.6, thudT + 0.012);
+    thudG.gain.exponentialRampToValueAtTime(0.001, thudT + 0.28);
+    thud.start(thudT);
+    thud.stop(thudT + 0.3);
+
+    setTimeout(() => ctx.close(), (spinDuration + 0.5) * 1000);
+  } catch (_) {
+    // AudioContext not available — fail silently
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  setupNeedleDrag();
+  state.targetAngle = 90;
+  drawWheel();
+
+  // Enter on handoff inputs confirms the round
+  ['handoff-left', 'handoff-right'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirmHandoff();
+    });
+  });
+
+  // Clamp target input on blur
+  document.getElementById('target-score-input').addEventListener('blur', function() {
+    this.value = Math.max(5, Math.min(99, parseInt(this.value) || 15));
+  });
+});
+
+// Prevent default touch behavior on SVG to avoid scroll interference
+document.getElementById('wheel-svg')?.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
+</script>
+</body>
+</html>
